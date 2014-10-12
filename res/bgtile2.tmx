@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="20" height="40" tilewidth="24" tileheight="24">
+ <tileset firstgid="1" name="bgmap" tilewidth="24" tileheight="24">
+  <image source="bgmap.png" width="72" height="48"/>
+ </tileset>
+ <layer name="Слой тайлов 2" width="20" height="40">
+  <data encoding="base64" compression="zlib">
+   eJxjY2BgYBvFo3iAMCOVMfMAYxYCfHQ5fPKDFdPazdQ2f7CG8WCIf2LtJ0YdNf1C7bAh1v0DHR+0dgs2c2llz0gxbyDSKrFqqek2eqSdgTKP2uroiQcy/VGKAQp1C0I=
+  </data>
+ </layer>
+</map>
