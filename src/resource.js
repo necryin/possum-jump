@@ -13,9 +13,11 @@ var res = {
     rod_png : "res/rod.png",
     bg1_png : "res/bg1.png",
     yummy1_png : "res/yummy1.png",
+    enemy1_l_png : "res/enemy1_l.png",
     restart_n_png : "res/restart_n.png",
     restart_s_png : "res/restart_s.png",
-    CloseSelected_png : "res/CloseSelected.png"
+    CloseSelected_png : "res/CloseSelected.png",
+    pickup_yummy_mp3 : "res/pickup_yummy.mp3"
 };
 
 var g_resources = [];

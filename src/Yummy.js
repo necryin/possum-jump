@@ -5,14 +5,6 @@ var Yummy = cc.Class.extend({
     space:null,
     sprite:null,
     shape:null,
-    _map: 0,// which map belong to
-
-    get map() {
-        return this._map;
-    },
-    set map(newMap) {
-        this._map = newMap;
-    },
 
     /**
      *

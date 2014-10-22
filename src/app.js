@@ -2,6 +2,7 @@
 var MainLayer = cc.Layer.extend({
     ctor : function(){
         this._super();
+        cc.director.setAnimationInterval(1.0/60);
     },
     init:function(){
         this._super();
@@ -20,7 +21,7 @@ var MainLayer = cc.Layer.extend({
             cc.Sprite.create(res.settings_png), //select state image
             this.onSettings, this);
 
-        var menu = cc.Menu.create(menuItemPlay, menuItemSettings);  //7. create the menu
+        var menu = cc.Menu.create(menuItemPlay, menuItemSettings);
         menu.alignItemsVerticallyWithPadding(10);
         this.addChild(menu, 1, 2);
         menu.x = winsize.width / 2;
@@ -32,9 +33,7 @@ var MainLayer = cc.Layer.extend({
         cc.log("==onplay clicked");
 //        cc.audioEngine.resumeMusic(res.main_mp3, true);
         cc.director.runScene(new PlayScene());
-        cc.log("==onplay ololo");
 //        cc.audioEngine.playMusic(res.main_mp3, true);
-//        cc.director.runScene(new PlayScene());
     },
 
     onSettings :  function(){
@@ -43,8 +42,6 @@ var MainLayer = cc.Layer.extend({
         var scene = new cc.Scene();
         scene.addChild(new SettingsLayer());
         cc.director.runScene(new cc.TransitionFade(1.2, scene));
-
-//        cc.director.runScene(new PlayScene());
     }
 });
 

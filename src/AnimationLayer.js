@@ -13,9 +13,9 @@ var AnimationLayer = cc.Layer.extend({
     yummy: null,
     recognizer: null,
     index: 0,
-    seconds: 0,
     bgObjs: [],
-
+    start: true,
+    pause: null,
 
     ctor: function (space) {
         this._super();
@@ -30,8 +30,6 @@ var AnimationLayer = cc.Layer.extend({
     init: function () {
         this._super();
 
-        this.seconds = parseInt(new Date().getTime() / 1000);
-
         // create sprite sheet
         cc.spriteFrameCache.addSpriteFrames(res.hero_plist);
         this.spriteSheet = cc.SpriteBatchNode.create(res.hero_png);
@@ -40,12 +38,11 @@ var AnimationLayer = cc.Layer.extend({
         //init  actions
         this.initAction();
 
-
         //create runner through physic engine
         this.sprite = cc.PhysicsSprite.create("#hero1.png");
         var contentSize = this.sprite.getContentSize();
         // init body
-        this.body = new cp.Body(1, cp.momentForBox(1, contentSize.width, contentSize.height));
+        this.body = new cp.Body(1, 0.1); //cp.momentForBox(1, contentSize.width, contentSize.height)
         this.body.p = cc.p(g_heroStartX, -100);
         this.body.v_limit = g_heroMaxSpeed;
 
@@ -60,6 +57,11 @@ var AnimationLayer = cc.Layer.extend({
 
         this.spriteSheet.addChild(this.sprite);
 
+        this.schedule(this.addEnemy, 2);
+        this.schedule(this.addYummy, 3);
+        this.schedule(this.addOb, 2);
+
+        this.pause = new PauseLayer();
         //initialize the recognizer
 //        this.recognizer = new SimpleRecognizer();
 //
@@ -77,6 +79,19 @@ var AnimationLayer = cc.Layer.extend({
                 cc.log("press" + keyCode);
                 if (keyCode == 37) { //left
                     event.getCurrentTarget().moveLeft();
+                }
+                if (keyCode == 32) { //pause
+                    self = event.getCurrentTarget();
+                    if(self.start) {
+                        cc.director.pause();
+                        self.pause.y = self.getEyeY();
+                        self.addChild(self.pause);
+                    } else {
+                        cc.director.resume();
+                        self.removeChild(self.pause);
+                    }
+                    self.start = !self.start;
+
                 }
                 if (keyCode == 39) { //right
                     event.getCurrentTarget().moveRight();
@@ -129,11 +144,6 @@ var AnimationLayer = cc.Layer.extend({
 //        }
     },
 
-    modVelocity: function (v) {
-        if (v < 0) return -v;
-        return v;
-    },
-
     moveRight: function () {
         cc.log("right");
         this.body.applyImpulse(cp.v(g_heroSpeed, -g_heroSpeed), cp.v(0, 0));
@@ -144,35 +154,32 @@ var AnimationLayer = cc.Layer.extend({
         this.body.applyImpulse(cp.v(-g_heroSpeed, -g_heroSpeed), cp.v(0, 0));
     },
 
-    getEyeY: function (dt) {
-        var yy = Math.round(this.sprite.getPositionY() - 3 * g_heroStartY);
-        var nindex = -parseInt(this.sprite.getPositionY() / 600);
+    getEyeY: function () {
+        //попутно определяет положение героя
+        return  Math.round(this.sprite.getPositionY() - 3 * g_heroStartY);
+    },
+
+    addEnemy: function(){
+        var yy = this.getEyeY();
+        var enemy = new Rod(this, this.space, 60, yy - 50);
+        enemy.body.applyImpulse(cp.v(1, 0), cp.v(0, 0));
+        this.bgObjs.push(enemy);
+    },
+
+    addOb: function() {
+        var yy = this.getEyeY();
         var winSize = cc.director.getWinSize();
-        if(nindex != this.index) {
-            this.index = nindex;
-        }
-        if(!this.yummy) {
-            this.yummy = new Yummy(this, this.space, Math.random() * (200 - 10) + 10, yy - 200);
-        }
-        if(!this.vetka) {
-            if(this.index % 2) {
-                this.vetka =  new Rod(this,
-                    this.space, 100, yy -100);
-            } else {
-                this.vetka =  new Rod(this,
-                    this.space, 400, yy - 100);
-            }
+        var l = parseInt(rand(120 , winSize.width));
+        var ob = new BgObject(this, this.space, l, yy - 300);
+        this.bgObjs.push(ob);
+    },
 
-            //Sensors only call collision callbacks, and never generate real collisions
-//            this.shape.setSensor(true);
-        }
-        var seconds = parseInt(new Date().getTime() / 1000);
-        if (this.seconds + 3 == seconds) {
-            this.seconds = seconds;
-            this.bgObjs.push(new BgObject(this, this.space, Math.random() * ( winSize.width - 120) + 120, yy - winSize.height / 2 - 100));
-        }
-
-        return yy;
+    addYummy: function() {
+        var yy = this.getEyeY();
+        var winSize = cc.director.getWinSize();
+        var l = parseInt(rand(40 , winSize.width));
+        var yummy = new Yummy(this, this.space, l , yy - 200);
+        this.bgObjs.push(yummy);
     },
 
     deleteBgByShape: function (shape) {
@@ -180,24 +187,21 @@ var AnimationLayer = cc.Layer.extend({
             if( this.bgObjs[i].shape.hashid == shape.hashid) {
                 this.bgObjs[i].removeFromParent();
                 this.bgObjs.splice(i, 1);
-                cc.log("deleted");
-                cc.log(this.bgObjs);
+                cc.log("#" + this.bgObjs[i].shape.hashid + "deleted");
                 break;
             }
         }
     },
 
     update: function (dt) {
-
+        //стены по бокам
         var winSize = cc.director.getWinSize();
         if( this.sprite.getPositionX() > winSize.width - this.sprite.width / 2) {
-            this.sprite.x =winSize.width - this.sprite.width / 2;
+            this.sprite.x = winSize.width - this.sprite.width / 2;
         }
         if( this.sprite.getPositionX() < this.sprite.width / 2) {
             this.sprite.x = this.sprite.width / 2;
         }
-
-
 
         // update meter
 //        var statusLayer = this.getParent().getParent().getChildByTag(TagOfLayer.Status);
@@ -218,7 +222,6 @@ var AnimationLayer = cc.Layer.extend({
 //                this.sprite.runAction(this.runningAction);
 //            }
 //        }
-
     }
 
 });

@@ -22,6 +22,7 @@
         "src/Yummy.js",
         "src/globals.js",
         "src/AnimationLayer.js",
-        "src/BackgroundLayer.js"
+        "src/BackgroundLayer.js",
+        "src/PauseLayer.js"
     ]
 }

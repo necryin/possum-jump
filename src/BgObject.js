@@ -19,17 +19,18 @@ var BgObject = cc.Class.extend({
     // механизм рандомных фонов
         this.sprite = cc.PhysicsSprite.create(res.bg1_png);
         var contentSize = this.sprite.getContentSize();
-        this.sprite.opacity = Math.random() * (100 - 30) + 30;
+        this.sprite.opacity = rand(30, 100);
 
         this.body = new cp.Body(1, cp.momentForBox(1, contentSize.width, contentSize.height));
         this.body.applyImpulse(cp.v(0, g_heroSpeed), cp.v(0, 0));
         this.body.setPos(cc.p(posX, posY));
 
-        this.sprite.setBody(body);
+        this.sprite.setBody(this.body);
 
-        this.shape = new cp.BoxShape(body,
+        this.shape = new cp.BoxShape(this.body,
             this.sprite.getContentSize().width,
             this.sprite.getContentSize().height);
+
         this.shape.setCollisionType(SpriteTag.bg_obj);
         this.shape.setSensor(true);
         this.space.addStaticShape(this.shape);

@@ -1,130 +1,81 @@
 /**
  * Created by human on 16.09.2014.
  */
-var BackgroundLayer = cc.Layer.extend({
-    map00:null,
-    map01:null,
-    mapHeight:0,
-    mapIndex:0,
-    space:null,
-    spriteSheet:null,
-    objects:[],
+var BackgroundLayer = cc.LayerGradient.extend({
+    space: null,
+    spriteSheet: null,
+    seconds: 0,
+    phase: 0,
+    lc: [
+        {from: COLOR.DARKBLUE, to: COLOR.BLUE,     dur: 3, dir: 1},
+        {from: COLOR.BLUE,     to: COLOR.BLUE,     dur: 4, dir: 1},
+        {from: COLOR.BLUE,     to: COLOR.DARKBLUE, dur: 3, dir: 1},
+        {from: COLOR.DARKBLUE, to: COLOR.DARKBLUE, dur: 4, dir: 0},
+        {from: COLOR.DARKBLUE, to: COLOR.BLUE,     dur: 3, dir: 0},
+    ],
 
-    ctor:function (space) {
-        this._super();
+    /** float colors accumulator */
+    colorR: 0,
+    colorG: 0,
+    colorB: 0,
 
-        // clean old array here
-        this.objects = [];
+    ctor:function (space, start, end, v) {
+        this._super(start, end, v);
         this.space = space;
-
-        this.init();
+        this.init(start, end, v);
     },
 
-    init:function () {
-        this._super();
-
-        var bg = cc.staticShapes
-        this.map00 = cc.TMXTiledMap.create(res.bgtile1_tmx);
-        this.map00.setPosition(cc.p(0, Math.round(-this.map00.getContentSize().height / 2) ) );
-        this.addChild(this.map00);
-
-        this.mapHeight = this.map00.getContentSize().height;
-
-        this.map01 = cc.TMXTiledMap.create(res.bgtile2_tmx);
-        this.map01.setPosition(cc.p(0, Math.round(-this.mapHeight - this.map00.getContentSize().height / 2 )));
-        this.addChild(this.map01);
-
-        // create sprite sheet
-//        cc.spriteFrameCache.addSpriteFrames(res.background_plist);
-//        this.spriteSheet = cc.SpriteBatchNode.create(res.background_png);
-//        this.addChild(this.spriteSheet);
-
-
-//        this.loadObjects(this.map00, 0);
-//        this.loadObjects(this.map01, 1);
-
+    init:function (start, end, v) {
+        this._super(start, end, cc.p(0, -1));
         this.scheduleUpdate();
+        this.colorR = start.r;
+        this.colorG = start.g;
+        this.colorB = start.b;
+        this.seconds = parseInt(new Date().getTime() / 1000);
     },
 
-    loadObjects:function (map, mapIndex) {
-        // add coins
-//        var coinGroup = map.getObjectGroup("coin");
-//        var coinArray = coinGroup.getObjects();
-//        for (var i = 0; i < coinArray.length; i++) {
-//            var coin = new Coin(this.spriteSheet,
-//                this.space,
-//                cc.p(coinArray[i]["x"] + this.mapWidth * mapIndex,coinArray[i]["y"]));
-//            coin.mapIndex = mapIndex;
-//            this.objects.push(coin);
-//        }
-//
-//        // add rock
-//        var rockGroup = map.getObjectGroup("rock");
-//        var rockArray = rockGroup.getObjects();
-//        for (var i = 0; i < rockArray.length; i++) {
-//            var rock = new Rock(this.spriteSheet,
-//                this.space,
-//                    rockArray[i]["x"] + this.mapWidth * mapIndex);
-//            rock.mapIndex = mapIndex;
-//            this.objects.push(rock);
-//        }
-    },
-
-    removeObjects:function (mapIndex) {
-//        while((function (obj, index) {
-//            for (var i = 0; i < obj.length; i++) {
-//                if (obj[i].mapIndex == index) {
-//                    obj[i].removeFromParent();
-//                    obj.splice(i, 1);
-//                    return true;
-//                }
-//            }
-//            return false;
-//        })(this.objects, mapIndex));
-    },
-
-    removeObjectByShape:function (shape) {
-//        for (var i = 0; i < this.objects.length; i++) {
-//            if (this.objects[i].getShape() == shape) {
-//                this.objects[i].removeFromParent();
-//                this.objects.splice(i, 1);
-//                break;
-//            }
-//        }
-    },
-
-    checkAndReload:function (eyeY) {
-        var newMapIndex = -parseInt(eyeY / this.mapHeight);
-//        cc.log("index = " + newMapIndex);
-        if (this.mapIndex == newMapIndex) {
-            return false;
+    changeColor: function(fC, iC, dt, lim){
+        if(dt > 0) {
+            if (iC >= lim) return lim;
+            return fC >= iC+1 ? iC+1 : iC;
+         } else {
+            if (iC <= lim) return lim;
+            return fC <= iC-1 ? iC-1 : iC;
         }
-
-        if (0 == newMapIndex % 2) {
-            // change mapSecond
-            cc.log("swap = " + 1);
-            this.map01.setPositionY(Math.round(-this.mapHeight * (newMapIndex + 1)));
-//            this.loadObjects(this.map01, newMapIndex + 1);
-
-        } else {
-            // change mapFirst
-            cc.log("swap = " + 0);
-            cc.log("newMapIndex = " + newMapIndex);
-            cc.log("swapto = " + (-this.mapHeight * (newMapIndex + 1)));
-            this.map00.setPositionY(Math.round(-this.mapHeight * (newMapIndex + 1)));
-//            this.loadObjects(this.map00, newMapIndex + 1);
-
-        }
-
-//        this.removeObjects(newMapIndex - 1);
-        this.mapIndex = newMapIndex;
-
-        return true;
     },
 
     update:function (dt) {
-        var animationLayer = this.getParent().getChildByTag(TagOfLayer.Animation);
-        var eyeY = animationLayer.getEyeY(dt);
-        this.checkAndReload(eyeY);
+        this.y = this.parent.getChildByTag(TagOfLayer.Animation).getEyeY();
+        this.foneCircle(dt);
+    },
+
+    foneCircle: function(dt) {
+        var i = this.phase;
+//        cc.log("lc phase#"+i);
+        var dr = (this.lc[i].to.r - this.lc[i].from.r) / this.lc[i].dur * dt;
+        var dg = (this.lc[i].to.g - this.lc[i].from.g) / this.lc[i].dur * dt;
+        var db = (this.lc[i].to.b - this.lc[i].from.b) / this.lc[i].dur * dt;
+        this.colorR += dr;
+        this.colorG += dg;
+        this.colorB += db;
+
+        var colorToChange = this.lc[i].dir ? this.getStartColor() : this.getEndColor();
+
+        var c = new cc.Color(
+            this.changeColor(this.colorR, colorToChange.r, dr, this.lc[i].to.r),
+            this.changeColor(this.colorG, colorToChange.g, dg, this.lc[i].to.g),
+            this.changeColor(this.colorB, colorToChange.b, db, this.lc[i].to.b), 255);
+
+        this.lc[i].dir ? this.setStartColor(c) : this.setEndColor(c);
+        var secs = parseInt(new Date().getTime() / 1000);
+
+        if(secs - this.seconds >= this.lc[i].dur && cc.colorEqual(c, this.lc[i].to)) {
+            this.phase += 1;
+            this.seconds = secs;
+            if ( this.phase >= this.lc.length) {
+                this.phase = 0;
+            }
+        }
     }
+
 });
