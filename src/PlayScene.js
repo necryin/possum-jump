@@ -72,6 +72,7 @@ var PlayScene = cc.Scene.extend({
         //stop bg music
         cc.audioEngine.stopMusic();
         cc.director.pause();
+        this.gameLayer.getChildByTag(TagOfLayer.Animation).pause();
         this.addChild(new GameOverLayer());
     },
 

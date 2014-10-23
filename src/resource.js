@@ -14,6 +14,7 @@ var res = {
     bg1_png : "res/bg1.png",
     yummy1_png : "res/yummy1.png",
     enemy1_l_png : "res/enemy1_l.png",
+    enemy1_r_png : "res/enemy1_r.png",
     restart_n_png : "res/restart_n.png",
     restart_s_png : "res/restart_s.png",
     CloseSelected_png : "res/CloseSelected.png",

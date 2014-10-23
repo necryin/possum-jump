@@ -4,32 +4,32 @@
 
 var AnimationLayer = cc.Layer.extend({
     spriteSheet: null,
-    runningAction: null,
     sprite: null,
     space: null,
     body: null,
     shape: null,
-    vetka: null,
-    yummy: null,
     recognizer: null,
-    index: 0,
+
+    runningAction: null,
     bgObjs: [],
     start: true,
-    pause: null,
+    pauseLayer: null,
+    heroY: null,
+    keysDown: [],
 
     ctor: function (space) {
         this._super();
         this.space = space;
         this.init();
 
+        //chipmunk debug
         this._debugNode = cc.PhysicsDebugNode.create(this.space);
         this._debugNode.setVisible(false);
-        // Parallax ratio and offset
         this.addChild(this._debugNode, 10);
     },
     init: function () {
         this._super();
-
+        this.heroY = 3;
         // create sprite sheet
         cc.spriteFrameCache.addSpriteFrames(res.hero_plist);
         this.spriteSheet = cc.SpriteBatchNode.create(res.hero_png);
@@ -57,11 +57,11 @@ var AnimationLayer = cc.Layer.extend({
 
         this.spriteSheet.addChild(this.sprite);
 
-        this.schedule(this.addEnemy, 2);
+        this.schedule(this.addEnemy, 3);
         this.schedule(this.addYummy, 3);
         this.schedule(this.addOb, 2);
 
-        this.pause = new PauseLayer();
+        this.pauseLayer = new PauseLayer();
         //initialize the recognizer
 //        this.recognizer = new SimpleRecognizer();
 //
@@ -76,25 +76,54 @@ var AnimationLayer = cc.Layer.extend({
         cc.eventManager.addListener({
             event: cc.EventListener.KEYBOARD,
             onKeyPressed: function (keyCode, event) {
-                cc.log("press" + keyCode);
+                var target =  event.getCurrentTarget();
+                cc.log("pressed: " + keyCode);
+                var isInArray = false;
+                for(var i = 0; i < target.keysDown.length; i++) {
+                    if(target.keysDown[i] == keyCode) {
+                        isInArray = true;
+                        break;
+                    }
+                }
+                if(!isInArray) {
+                    target.keysDown.push(keyCode);
+                }
+
+                if (keyCode == 40) { //accelerete
+                    event.getCurrentTarget().moveDown();
+                }
+                if (keyCode == 38) { //stop
+                    event.getCurrentTarget().moveUp();
+                }
                 if (keyCode == 37) { //left
                     event.getCurrentTarget().moveLeft();
                 }
                 if (keyCode == 32) { //pause
                     self = event.getCurrentTarget();
-                    if(self.start) {
+                    if (self.start) {
                         cc.director.pause();
-                        self.pause.y = self.getEyeY();
-                        self.addChild(self.pause);
+                        self.pauseLayer.y = self.getEyeY();
+                        self.addChild(self.pauseLayer);
                     } else {
                         cc.director.resume();
-                        self.removeChild(self.pause);
+                        self.removeChild(self.pauseLayer);
                     }
                     self.start = !self.start;
 
                 }
                 if (keyCode == 39) { //right
                     event.getCurrentTarget().moveRight();
+                }
+            },
+            onKeyReleased: function (keyCode, event) {
+                var target =  event.getCurrentTarget();
+                cc.log("released: " + keyCode);
+                cc.log(target.keysDown);
+                for(var i=0; i < target.keysDown.length; i++) {
+                    if(target.keysDown[i] == keyCode) {
+                        target.keysDown.splice(i, 1);
+                        break;
+                    }
                 }
             }
         }, this);
@@ -146,48 +175,63 @@ var AnimationLayer = cc.Layer.extend({
 
     moveRight: function () {
         cc.log("right");
-        this.body.applyImpulse(cp.v(g_heroSpeed, -g_heroSpeed), cp.v(0, 0));
+        this.body.applyImpulse(cp.v(g_heroSpeed, -10), cp.v(0, 0));
     },
 
     moveLeft: function () {
         cc.log("left");
-        this.body.applyImpulse(cp.v(-g_heroSpeed, -g_heroSpeed), cp.v(0, 0));
+        this.sprite.x -= 0.01;
+        this.body.applyImpulse(cp.v(-g_heroSpeed, -10), cp.v(0, 0));
+    },
+
+    moveUp: function () {
+        cc.log("up");
+        this.heroY += 0.05;
+        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
+    },
+
+    moveDown: function () {
+        cc.log("down");
+        this.heroY -= 0.05;
+        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
     },
 
     getEyeY: function () {
         //попутно определяет положение героя
-        return  Math.round(this.sprite.getPositionY() - 3 * g_heroStartY);
+        return  Math.round(this.sprite.getPositionY() -  this.heroY * g_heroStartY);
     },
 
-    addEnemy: function(){
+    addEnemy: function () {
         var yy = this.getEyeY();
-        var enemy = new Rod(this, this.space, 60, yy - 50);
+        var type = Math.round(Math.random());
+        cc.log("er" + type);
+        var enemy = new Rod(this, this.space, 60, yy - 50, type);
         enemy.body.applyImpulse(cp.v(1, 0), cp.v(0, 0));
         this.bgObjs.push(enemy);
     },
 
-    addOb: function() {
+    addOb: function () {
         var yy = this.getEyeY();
         var winSize = cc.director.getWinSize();
-        var l = parseInt(rand(120 , winSize.width));
+        var l = parseInt(rand(120, winSize.width));
         var ob = new BgObject(this, this.space, l, yy - 300);
         this.bgObjs.push(ob);
     },
 
-    addYummy: function() {
+    addYummy: function () {
         var yy = this.getEyeY();
         var winSize = cc.director.getWinSize();
-        var l = parseInt(rand(40 , winSize.width));
-        var yummy = new Yummy(this, this.space, l , yy - 200);
+        var l = parseInt(rand(40, winSize.width));
+        var yummy = new Yummy(this, this.space, l, yy - 200);
         this.bgObjs.push(yummy);
     },
 
     deleteBgByShape: function (shape) {
-        for(var i=0; i < this.bgObjs.length; i++) {
-            if( this.bgObjs[i].shape.hashid == shape.hashid) {
+        for (var i = 0; i < this.bgObjs.length; i++) {
+            if (this.bgObjs[i].shape.hashid == shape.hashid) {
                 this.bgObjs[i].removeFromParent();
                 this.bgObjs.splice(i, 1);
-                cc.log("#" + this.bgObjs[i].shape.hashid + "deleted");
+                cc.log("delete shape#" + this.bgObjs[i].shape.hashid);
                 break;
             }
         }
@@ -196,13 +240,13 @@ var AnimationLayer = cc.Layer.extend({
     update: function (dt) {
         //стены по бокам
         var winSize = cc.director.getWinSize();
-        if( this.sprite.getPositionX() > winSize.width - this.sprite.width / 2) {
+        if (this.sprite.getPositionX() > winSize.width - this.sprite.width / 2) {
             this.sprite.x = winSize.width - this.sprite.width / 2;
         }
-        if( this.sprite.getPositionX() < this.sprite.width / 2) {
+        if (this.sprite.getPositionX() < this.sprite.width / 2) {
             this.sprite.x = this.sprite.width / 2;
         }
-
+        //TODO полезный кусок кода про анимацию
         // update meter
 //        var statusLayer = this.getParent().getParent().getChildByTag(TagOfLayer.Status);
 //        statusLayer.updateMeter(this.sprite.getPositionX() - g_runnerStartX);
