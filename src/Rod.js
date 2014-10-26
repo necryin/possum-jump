@@ -6,39 +6,34 @@ var Rod = cc.Class.extend({
     sprite: null,
     shape: null,
     body: null,
+    speed: null,
+    type: null,
 
-    /**
-     *
-     * @param spriteSheet
-     * @param space
-     * @param posX
-     * @param posY
-     */
-    ctor: function (spriteSheet, space, posX, posY, type) {
+    ctor: function (spriteSheet, space, pos, type) {
         this.space = space;
-
+        this.type = type;
+        this.speed = parseInt(rand(10, 50));
         var winSize = cc.director.getWinSize();
-        var speed = rand(6, 15);
+        var speed = rand(40, 60);
         switch(type) {
             case ENEMY.BLUEBIRD_L:
                 this.sprite = cc.PhysicsSprite.create(res.enemy1_l_png);
                 break;
             case ENEMY.BLUEBIRD_R:
                 this.sprite = cc.PhysicsSprite.create(res.enemy1_r_png);
-                posX += -posX + winSize.width;
+                pos.x += -pos.x + winSize.width;
                 speed = -speed;
                 break;
-
         }
 
-        var contentSize = this.sprite.getContentSize();
-        // init body
-        this.body = new cp.Body(0.1, 0.1); //cp.momentForBox(1, contentSize.width, contentSize.height)
-        this.body.p = cc.p(posX, posY);
-        this.body.applyImpulse(cp.v(speed, 0), cp.v(0, 0));//run speed
+        this.body = new cp.Body(1, 0.1); //cp.momentForBox(1, contentSize.width, contentSize.height)
+        this.body.p = pos;
+       // this.body.applyImpulse(cp.v(speed, 0), cp.v(0, 0));//run speed
         this.space.addBody(this.body);
         //init shape
-        this.shape = new cp.BoxShape(this.body, contentSize.width, contentSize.height);
+        var radius = 0.95 * this.sprite.getContentSize().width / 2;
+        this.shape = new cp.CircleShape(this.body, radius, cp.vzero);
+
         this.shape.setCollisionType(SpriteTag.rod);
         this.space.addShape(this.shape);
 
@@ -52,9 +47,6 @@ var Rod = cc.Class.extend({
         this.shape = null;
         this.sprite.removeFromParent();
         this.sprite = null;
-    },
-
-    getShape: function () {
-        return this.shape;
     }
+
 });

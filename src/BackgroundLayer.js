@@ -36,7 +36,7 @@ var BackgroundLayer = cc.LayerGradient.extend({
 
     changeColor: function(fC, iC, dt, lim){
         if(dt > 0) {
-            if (iC >= lim) return lim;
+            if (iC > lim) return lim;
             return fC >= iC+1 ? iC+1 : iC;
          } else {
             if (iC <= lim) return lim;
@@ -45,7 +45,6 @@ var BackgroundLayer = cc.LayerGradient.extend({
     },
 
     update:function (dt) {
-        this.y = this.parent.getChildByTag(TagOfLayer.Animation).getEyeY();
         this.foneCircle(dt);
     },
 

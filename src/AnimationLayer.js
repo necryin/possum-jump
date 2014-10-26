@@ -12,10 +12,15 @@ var AnimationLayer = cc.Layer.extend({
 
     runningAction: null,
     bgObjs: [],
+    enemies: [],
     start: true,
     pauseLayer: null,
-    heroY: null,
-    keysDown: [],
+    keysDown: {
+        down:  false,
+        up:    false,
+        left:  false,
+        right: false
+    },
 
     ctor: function (space) {
         this._super();
@@ -26,10 +31,20 @@ var AnimationLayer = cc.Layer.extend({
         this._debugNode = cc.PhysicsDebugNode.create(this.space);
         this._debugNode.setVisible(false);
         this.addChild(this._debugNode, 10);
+
     },
+
+
+    keyDownFree: function() {
+        this.keysDown.down = false;
+        this.keysDown.up = false;
+        this.keysDown.left = false;
+        this.keysDown.right = false;
+    },
+
     init: function () {
         this._super();
-        this.heroY = 3;
+
         // create sprite sheet
         cc.spriteFrameCache.addSpriteFrames(res.hero_plist);
         this.spriteSheet = cc.SpriteBatchNode.create(res.hero_png);
@@ -43,10 +58,10 @@ var AnimationLayer = cc.Layer.extend({
         var contentSize = this.sprite.getContentSize();
         // init body
         this.body = new cp.Body(1, 0.1); //cp.momentForBox(1, contentSize.width, contentSize.height)
-        this.body.p = cc.p(g_heroStartX, -100);
-        this.body.v_limit = g_heroMaxSpeed;
+        this.body.setPos(cc.p(g_heroStartX, g_heroStartY));
+//        this.body.v_limit = g_heroMaxSpeed;
 
-        this.body.applyImpulse(cp.v(0, -g_heroSpeed - 10), cp.v(0, 0));//run speed
+//        this.body.applyImpulse(cp.v(0, -g_heroSpeed), cp.v(0, 0));//run speed
         this.space.addBody(this.body);
         //init shape
         this.shape = new cp.BoxShape(this.body, contentSize.width, contentSize.height);
@@ -57,11 +72,13 @@ var AnimationLayer = cc.Layer.extend({
 
         this.spriteSheet.addChild(this.sprite);
 
-        this.schedule(this.addEnemy, 3);
-        this.schedule(this.addYummy, 3);
-        this.schedule(this.addOb, 2);
+        this.schedule(this.addEnemy, 1.11);
+        this.schedule(this.addYummy, 2.83);
+        this.schedule(this.addOb, 2.17);
 
+        cc.tintTo
         this.pauseLayer = new PauseLayer();
+        this.pauseLayer.setLocalZOrder(666);
         //initialize the recognizer
 //        this.recognizer = new SimpleRecognizer();
 //
@@ -76,54 +93,49 @@ var AnimationLayer = cc.Layer.extend({
         cc.eventManager.addListener({
             event: cc.EventListener.KEYBOARD,
             onKeyPressed: function (keyCode, event) {
-                var target =  event.getCurrentTarget();
+                var target = event.getCurrentTarget();
                 cc.log("pressed: " + keyCode);
-                var isInArray = false;
-                for(var i = 0; i < target.keysDown.length; i++) {
-                    if(target.keysDown[i] == keyCode) {
-                        isInArray = true;
-                        break;
-                    }
-                }
-                if(!isInArray) {
-                    target.keysDown.push(keyCode);
-                }
 
                 if (keyCode == 40) { //accelerete
-                    event.getCurrentTarget().moveDown();
+                    target.keysDown.down = true;
+//                    target.moveDown();
                 }
                 if (keyCode == 38) { //stop
-                    event.getCurrentTarget().moveUp();
+                    target.keysDown.up = true;
+//                    target.moveUp();
                 }
                 if (keyCode == 37) { //left
-                    event.getCurrentTarget().moveLeft();
-                }
-                if (keyCode == 32) { //pause
-                    self = event.getCurrentTarget();
-                    if (self.start) {
-                        cc.director.pause();
-                        self.pauseLayer.y = self.getEyeY();
-                        self.addChild(self.pauseLayer);
-                    } else {
-                        cc.director.resume();
-                        self.removeChild(self.pauseLayer);
-                    }
-                    self.start = !self.start;
-
+                    target.keysDown.left = true;
+//                    target.moveLeft();
                 }
                 if (keyCode == 39) { //right
-                    event.getCurrentTarget().moveRight();
+                    target.keysDown.right = true;
+//                    target.moveRight();
+                }
+                if (keyCode == 32) { //pause
+                    if (target.start) {
+                        cc.director.pause();
+                        target.addChild(target.pauseLayer);
+                    } else {
+                        cc.director.resume();
+                        target.removeChild(target.pauseLayer);
+                    }
+                    target.start = !target.start;
                 }
             },
             onKeyReleased: function (keyCode, event) {
-                var target =  event.getCurrentTarget();
-                cc.log("released: " + keyCode);
-                cc.log(target.keysDown);
-                for(var i=0; i < target.keysDown.length; i++) {
-                    if(target.keysDown[i] == keyCode) {
-                        target.keysDown.splice(i, 1);
-                        break;
-                    }
+                var target = event.getCurrentTarget();
+                if (keyCode == 40) { //accelerete
+                    target.keysDown.down = false;
+                }
+                if (keyCode == 38) { //stop
+                    target.keysDown.up = false;
+                }
+                if (keyCode == 37) { //left
+                    target.keysDown.left = false;
+                }
+                if (keyCode == 39) { //right
+                    target.keysDown.right = false;
                 }
             }
         }, this);
@@ -175,70 +187,74 @@ var AnimationLayer = cc.Layer.extend({
 
     moveRight: function () {
         cc.log("right");
-        this.body.applyImpulse(cp.v(g_heroSpeed, -10), cp.v(0, 0));
+        this.sprite.x += g_heroSpeed;
+//        this.body.applyImpulse(cp.v(g_heroSpeed, -10), cp.v(0, 0));
     },
 
     moveLeft: function () {
         cc.log("left");
-        this.sprite.x -= 0.01;
-        this.body.applyImpulse(cp.v(-g_heroSpeed, -10), cp.v(0, 0));
+        this.sprite.x -= g_heroSpeed;
     },
 
     moveUp: function () {
         cc.log("up");
-        this.heroY += 0.05;
-        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
+        this.sprite.y += g_heroSpeed;
+//        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
     },
 
     moveDown: function () {
         cc.log("down");
-        this.heroY -= 0.05;
-        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
-    },
-
-    getEyeY: function () {
-        //попутно определяет положение героя
-        return  Math.round(this.sprite.getPositionY() -  this.heroY * g_heroStartY);
+        this.sprite.y -= g_heroSpeed;
+//        this.body.applyImpulse(cp.v(0, 0), cp.v(0, 0));
     },
 
     addEnemy: function () {
-        var yy = this.getEyeY();
+        var winSize = cc.director.getWinSize();
         var type = Math.round(Math.random());
         cc.log("er" + type);
-        var enemy = new Rod(this, this.space, 60, yy - 50, type);
-        enemy.body.applyImpulse(cp.v(1, 0), cp.v(0, 0));
+        var enemy = new Rod(this, this.space, cc.p(-20, 0), type);
         this.bgObjs.push(enemy);
+        var r = rand(100, winSize.height);
+        cc.log(r);
+
+        switch( enemy.type) {
+            case ENEMY.BLUEBIRD_L:
+                var move = cc.MoveBy.create(2, cc.p(winSize.width + 100, r)).easing(cc.easeIn(5.0));
+                break;
+            case ENEMY.BLUEBIRD_R:
+                var move = cc.MoveTo.create(2, cc.p(-100, r)).easing(cc.easeIn(5.0));
+                break;
+        }
+        enemy.sprite.runAction(move);
     },
 
     addOb: function () {
-        var yy = this.getEyeY();
         var winSize = cc.director.getWinSize();
-        var l = parseInt(rand(120, winSize.width));
-        var ob = new BgObject(this, this.space, l, yy - 300);
+        var l = parseInt(rand(0, winSize.width));
+        var ob = new BgObject(this, this.space, cc.p(l, -100));
         this.bgObjs.push(ob);
     },
 
     addYummy: function () {
-        var yy = this.getEyeY();
         var winSize = cc.director.getWinSize();
-        var l = parseInt(rand(40, winSize.width));
-        var yummy = new Yummy(this, this.space, l, yy - 200);
+        var l = parseInt(rand(0, winSize.width));
+        var yummy = new Yummy(this, this.space, cc.p(l, -100));
         this.bgObjs.push(yummy);
     },
 
     deleteBgByShape: function (shape) {
         for (var i = 0; i < this.bgObjs.length; i++) {
             if (this.bgObjs[i].shape.hashid == shape.hashid) {
+                cc.log("delete shape#" + this.bgObjs[i].shape.hashid);
                 this.bgObjs[i].removeFromParent();
                 this.bgObjs.splice(i, 1);
-                cc.log("delete shape#" + this.bgObjs[i].shape.hashid);
                 break;
             }
         }
     },
 
     update: function (dt) {
-        //стены по бокам
+        //стены
         var winSize = cc.director.getWinSize();
         if (this.sprite.getPositionX() > winSize.width - this.sprite.width / 2) {
             this.sprite.x = winSize.width - this.sprite.width / 2;
@@ -246,26 +262,35 @@ var AnimationLayer = cc.Layer.extend({
         if (this.sprite.getPositionX() < this.sprite.width / 2) {
             this.sprite.x = this.sprite.width / 2;
         }
-        //TODO полезный кусок кода про анимацию
-        // update meter
-//        var statusLayer = this.getParent().getParent().getChildByTag(TagOfLayer.Status);
-//        statusLayer.updateMeter(this.sprite.getPositionX() - g_runnerStartX);
+        if (this.sprite.getPositionY() > winSize.height - this.sprite.height / 2) {
+            this.sprite.y = winSize.height - this.sprite.height / 2;
+        }
+        if (this.sprite.getPositionY() < this.sprite.height / 2) {
+            this.sprite.y = this.sprite.height / 2;
+        }
 
-        // check and update runner stat
-//        var vel = this.body.getVel();
-//        if (this.stat == RunnerStat.jumpUp) {
-//            if (vel.y < 0.1) {
-//                this.stat = RunnerStat.jumpDown;
-//                this.sprite.stopAllActions();
-//                this.sprite.runAction(this.jumpDownAction);
-//            }
-//        } else if (this.stat == RunnerStat.jumpDown) {
-//            if (vel.y == 0) {
-//                this.stat = RunnerStat.running;
-//                this.sprite.stopAllActions();
-//                this.sprite.runAction(this.runningAction);
-//            }
-//        }
+        //двигаем объекты
+        for (var i = 0; i < this.bgObjs.length; i++) {
+            if(this.bgObjs[i] instanceof Rod) {
+                this.bgObjs[i].sprite.y += dt * g_bg_speed;
+            } else {
+                this.bgObjs[i].sprite.y += dt * g_bg_speed;
+            }
+        }
+
+        //moves
+        if (this.keysDown.down) {
+            this.sprite.y -= dt * g_heroSpeed;
+        }
+        if (this.keysDown.up) {
+            this.sprite.y += dt * g_heroSpeed;;
+        }
+        if (this.keysDown.left) {
+            this.sprite.x -= dt * g_heroSpeed;;
+        }
+        if (this.keysDown.right) {
+            this.sprite.x += dt * g_heroSpeed;;
+        }
     }
 
 });

@@ -4,26 +4,24 @@
 
 var PlayScene = cc.Scene.extend({
     space: null,
-    backGround: null,
-    bgShapes: [],
     shapesToRemove: [],
     gameLayer: null,
     remover: null,
-    leftWall: null,
-    rightWall: null,
+
     // init space of chipmunk
     initPhysics: function () {
         this.space = new cp.Space();
-        // Gravity
-        this.space.gravity = cp.v(0, -10);
-
+        this.space.gravity = cp.v(0, 0);
+        var winSize = cc.director.getWinSize();
         // init body
         var body = new cp.Body(1, cp.momentForBox(1, 10000, 10));
-        body.p = cc.p(-1000, g_heroStartY + 200);
+        body.p = cc.p(-1000, winSize.height / 2 + 100);
         this.remover = new cp.SegmentShape(body,
             cp.v(0, 200),// start point
-            cp.v(4294967295, 0),// MAX INT:4294967295
+            cp.v(MAX_INT, 0),
             0);// thickness of wall
+
+        this.remover.a.y = winSize.height + 300;
         this.space.addShape(this.remover);
         this.remover.setCollisionType(SpriteTag.remover);
 
@@ -73,6 +71,7 @@ var PlayScene = cc.Scene.extend({
         cc.audioEngine.stopMusic();
         cc.director.pause();
         this.gameLayer.getChildByTag(TagOfLayer.Animation).pause();
+        this.gameLayer.getChildByTag(TagOfLayer.Animation).keyDownFree();
         this.addChild(new GameOverLayer());
     },
 
@@ -96,6 +95,7 @@ var PlayScene = cc.Scene.extend({
         //add three layer in the right order
         this.gameLayer.addChild(new BackgroundLayer(this.space, COLOR.DARKBLUE, COLOR.BLUE), 0, TagOfLayer.Background);
         this.gameLayer.addChild(new AnimationLayer(this.space), 0, TagOfLayer.Animation);
+        this.gameLayer.setPosition(cc.p(0, 0));
 
         this.addChild(this.gameLayer);
         this.addChild(new StatusLayer(), 0, TagOfLayer.Status);
@@ -112,19 +112,12 @@ var PlayScene = cc.Scene.extend({
         // chipmunk step
         this.space.step(dt);
 
-        var animationLayer = this.gameLayer.getChildByTag(TagOfLayer.Animation);
-
         //gb analog
         for (var i = 0; i < this.shapesToRemove.length; i++) {
             var shape = this.shapesToRemove[i];
-            animationLayer.deleteBgByShape(shape);
+            this.gameLayer.getChildByTag(TagOfLayer.Animation).deleteBgByShape(shape);
         }
         this.shapesToRemove = [];
-
-        var eyeY = animationLayer.getEyeY();
-        var winSize = cc.director.getWinSize();
-        this.remover.a.y = eyeY + winSize.height / 2 + 100;
-        this.gameLayer.setPosition(cc.p(0, -eyeY));
     }
 
 });

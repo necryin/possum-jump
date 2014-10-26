@@ -2,9 +2,10 @@
  * Created by human on 17.09.2014.
  */
 
-var g_heroStartY = 100;
+var g_heroStartY = 400;
 var g_heroStartX = 100;
-var g_heroSpeed = 23;
+var g_heroSpeed = 150;
+var g_bg_speed = 120;
 var g_heroMaxSpeed = g_heroSpeed*10;
 var MAX_INT = 4294967295;
 
