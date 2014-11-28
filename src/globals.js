@@ -33,16 +33,6 @@ if(typeof SpriteTag == "undefined") {
     SpriteTag.enemy = 6;
 };
 
-if(typeof PHASE == "undefined") {
-    var PHASE = {};
-    PHASE.DAWN = 0;
-    PHASE.DAY = 1;
-    PHASE.SUNSET = 2;
-    PHASE.NIGHT = 3;
-    PHASE.SHORT = 6;
-    PHASE.NORMAL = 5;
-};
-
 if(typeof config == "undefined") {
     var config = {};
     config.sound = false;

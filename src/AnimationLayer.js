@@ -31,9 +31,7 @@ var AnimationLayer = cc.Layer.extend({
         this._debugNode = cc.PhysicsDebugNode.create(this.space);
         this._debugNode.setVisible(false);
         this.addChild(this._debugNode, 10);
-
     },
-
 
     keyDownFree: function() {
         this.keysDown.down = false;
@@ -76,7 +74,6 @@ var AnimationLayer = cc.Layer.extend({
         this.schedule(this.addYummy, 2.83);
         this.schedule(this.addOb, 2.17);
 
-        cc.tintTo
         this.pauseLayer = new PauseLayer();
         this.pauseLayer.setLocalZOrder(666);
         //initialize the recognizer
@@ -211,23 +208,25 @@ var AnimationLayer = cc.Layer.extend({
     addEnemy: function () {
         var winSize = cc.director.getWinSize();
         var type = Math.round(Math.random());
-        cc.log("er" + type);
-        var enemy = new Rod(this, this.space, cc.p(-20, 0), type);
+        cc.log("er=" + type);
+        var enemy = new Rod(this, this.space, cc.p(-100, 200), type);
         this.bgObjs.push(enemy);
-        var r = rand(100, winSize.height);
-        cc.log(r);
+
+        var shake = cc.sequence( cc.moveBy(0.3, cc.p(0, 100)), cc.moveBy(0.3, cc.p(0, -100))).repeatForever();
+        enemy.sprite.runAction( shake );
 
         switch( enemy.type) {
             case ENEMY.BLUEBIRD_L:
-                var move = cc.MoveBy.create(2, cc.p(winSize.width + 100, r)).easing(cc.easeIn(5.0));
+                var move = cc.moveTo(4, cc.p(winSize.width + 100, 0)); //.easing(cc.easeIn(5.0));
                 break;
             case ENEMY.BLUEBIRD_R:
-                var move = cc.MoveTo.create(2, cc.p(-100, r)).easing(cc.easeIn(5.0));
+                var move = cc.moveTo(4, cc.p(-100, 0)); //.easing(cc.easeIn(5.0));
                 break;
         }
-        enemy.sprite.runAction(move);
+        enemy.sprite.runAction(move.repeatForever());
     },
 
+    // TODO: copy past hell
     addOb: function () {
         var winSize = cc.director.getWinSize();
         var l = parseInt(rand(0, winSize.width));
@@ -254,7 +253,7 @@ var AnimationLayer = cc.Layer.extend({
     },
 
     update: function (dt) {
-        //стены
+        // walls
         var winSize = cc.director.getWinSize();
         if (this.sprite.getPositionX() > winSize.width - this.sprite.width / 2) {
             this.sprite.x = winSize.width - this.sprite.width / 2;
@@ -269,27 +268,27 @@ var AnimationLayer = cc.Layer.extend({
             this.sprite.y = this.sprite.height / 2;
         }
 
-        //двигаем объекты
+        // moves bgObjects
         for (var i = 0; i < this.bgObjs.length; i++) {
             if(this.bgObjs[i] instanceof Rod) {
-                this.bgObjs[i].sprite.y += dt * g_bg_speed;
+                this.bgObjs[i].sprite.y += dt * 80;
             } else {
                 this.bgObjs[i].sprite.y += dt * g_bg_speed;
             }
         }
 
-        //moves
+        // hero moves
         if (this.keysDown.down) {
             this.sprite.y -= dt * g_heroSpeed;
         }
         if (this.keysDown.up) {
-            this.sprite.y += dt * g_heroSpeed;;
+            this.sprite.y += dt * g_heroSpeed;
         }
         if (this.keysDown.left) {
-            this.sprite.x -= dt * g_heroSpeed;;
+            this.sprite.x -= dt * g_heroSpeed;
         }
         if (this.keysDown.right) {
-            this.sprite.x += dt * g_heroSpeed;;
+            this.sprite.x += dt * g_heroSpeed;
         }
     }
 

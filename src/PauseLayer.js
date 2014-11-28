@@ -3,7 +3,7 @@
  */
 
 var PauseLayer = cc.LayerColor.extend({
-    // constructor
+
     ctor:function () {
         this._super();
         this.init();

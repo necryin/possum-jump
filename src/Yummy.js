@@ -9,7 +9,7 @@ var Yummy = cc.Class.extend({
 
     ctor: function (spriteSheet, space, pos) {
         this.space = space;
-    // механизм рандомных вкуснях
+        // TODO need more yummies !!!
         this.sprite = cc.PhysicsSprite.create(res.yummy1_png);
         this.body = new cp.Body(10, 0.5);
         this.body.setPos(pos);

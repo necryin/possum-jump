@@ -81,7 +81,7 @@ var PlayScene = cc.Scene.extend({
 
     collisionRemoverBegin: function (arbiter, space) {
         var shapes = arbiter.getShapes();
-        //TODO наверное не стоит надеяться что remover hashid = 0 always
+        //TODO remover hashid = 0 only here it is not rule i think
         var shapeToRemove = shapes[0].hashid == 0 ? shapes[1] : shapes[0];
         cc.log("collide with remover. Type#" + shapeToRemove.collision_type);
         this.shapesToRemove.push(shapeToRemove);
@@ -111,7 +111,6 @@ var PlayScene = cc.Scene.extend({
     update: function (dt) {
         // chipmunk step
         this.space.step(dt);
-
         //gb analog
         for (var i = 0; i < this.shapesToRemove.length; i++) {
             var shape = this.shapesToRemove[i];

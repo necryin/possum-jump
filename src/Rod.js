@@ -1,6 +1,7 @@
 /**
  * Created by human on 01.10.2014.
  */
+// TODO need rename
 var Rod = cc.Class.extend({
     space: null,
     sprite: null,
@@ -21,11 +22,10 @@ var Rod = cc.Class.extend({
                 break;
             case ENEMY.BLUEBIRD_R:
                 this.sprite = cc.PhysicsSprite.create(res.enemy1_r_png);
-                pos.x += -pos.x + winSize.width;
+                pos.x = winSize.width - pos.x;
                 speed = -speed;
                 break;
         }
-
         this.body = new cp.Body(1, 0.1); //cp.momentForBox(1, contentSize.width, contentSize.height)
         this.body.p = pos;
        // this.body.applyImpulse(cp.v(speed, 0), cp.v(0, 0));//run speed
